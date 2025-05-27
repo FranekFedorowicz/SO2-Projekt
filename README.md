@@ -1,4 +1,4 @@
-# SO2-Projekt
+# SO2-Projekt 1
 # Problem jedzących filozofów
 
 ## Opis problemu
@@ -60,3 +60,95 @@ Projekt implementuje problem jedzących filozofów w C++ z użyciem wielowątkow
 ## Autor
 **Franciszek Fedorowicz**  
 Nr. 272845 | Systemy Operacyjne Projekt (grupa 13)
+
+
+# SO2-Projekt 2
+
+# Aplikacja czatu klient-serwer (WinSock)
+
+## Opis projektu
+
+Projekt przedstawia prostą aplikację komunikatora tekstowego stworzoną w języku C++ z wykorzystaniem biblioteki WinSock. Umożliwia komunikację wielu klientów w czasie rzeczywistym poprzez centralny serwer TCP, obsługujący przesyłanie wiadomości między użytkownikami.
+
+## Struktura projektu
+
+Projekt składa się z dwóch plików źródłowych:
+
+* **Server.cpp** – implementacja serwera, który nasłuchuje na połączenia i obsługuje klientów.
+* **Client.cpp** – implementacja klienta, który łączy się z serwerem, wysyła i odbiera wiadomości.
+
+## Wątki i ich reprezentacja
+
+* W projekcie wykorzystano wielowątkowość z biblioteki `std::thread`.
+* Każdy klient jest obsługiwany w osobnym wątku serwera.
+* Serwer ma dodatkowy wątek pozwalający mu wysyłać wiadomości z poziomu własnej konsoli.
+* Klient również korzysta z osobnego wątku do odbierania wiadomości, aby mógł jednocześnie pisać i odbierać.
+
+## Sekcje krytyczne i ich rozwiązanie
+
+### Współdzielenie klientów
+
+**Problem:** Równoczesny dostęp do listy połączonych klientów może prowadzić do konfliktów wątków.
+
+**Rozwiązanie:**
+
+* Zastosowano `std::mutex` (muteks `clients_mutex`) do synchronizacji dostępu do listy klientów na serwerze.
+* Przesyłanie wiadomości (broadcast) odbywa się tylko po uzyskaniu blokady.
+
+### Odbiór wiadomości przez klienta
+
+**Problem:** Równoległy odbiór danych przez klienta może kolidować z innymi operacjami, np. wejściem tekstowym.
+
+**Rozwiązanie:**
+
+* Wydzielono wątek `receive_messages`, który niezależnie nasłuchuje na wiadomości przychodzące.
+* Każda odebrana wiadomość jest wypisywana bez kolizji z wejściem użytkownika.
+
+### Wyjście do konsoli (`std::cout`)
+
+**Problem:** Równoczesne wypisywanie komunikatów przez kilka wątków może powodować nakładanie się tekstu.
+
+**Rozwiązanie:**
+
+* Komunikaty są wypisywane z zachowaniem synchronizacji strumienia (np. `std::cout.flush()`), co minimalizuje kolizje.
+* Potencjalne rozszerzenie: dodanie dedykowanego mutexa `cout_mutex` (obecnie niewykorzystany).
+
+## Instrukcja uruchomienia
+
+### Windows
+
+#### Kompilacja (w Visual Studio lub CMD/MSVC):
+
+1. Upewnij się, że linkujesz bibliotekę `ws2_32.lib`.
+2. Skorzystaj z poniższych komend w terminalu Visual Studio:
+
+```sh
+cl Server.cpp /EHsc /FeServer.exe ws2_32.lib
+cl Client.cpp /EHsc /FeClient.exe ws2_32.lib
+```
+
+#### Uruchomienie:
+
+1. Najpierw uruchom `Server.exe`.
+2. Następnie w innym oknie terminala uruchom `Client.exe`.
+
+Domyślnie klient łączy się z `127.0.0.1:8888`.
+
+### Zamykanie:
+
+* Wpisz `/exit` w kliencie, aby rozłączyć się z serwerem.
+* Wpisz `/exit` na serwerze, aby zakończyć wysyłanie wiadomości z konsoli (serwer nadal działa).
+
+## Podsumowanie
+
+Projekt implementuje prosty model czatu w architekturze klient-serwer z obsługą wielu klientów. Serwer rozgłasza wiadomości przychodzące od klientów do wszystkich pozostałych. Rozwiązano problemy synchronizacji poprzez zastosowanie `std::thread`, `std::mutex`, a także mechanizmów zarządzania połączeniami i wypisywaniem danych do konsoli.
+
+## Autor
+
+**Franciszek Fedorowicz**
+Nr. 272845 | Systemy Operacyjne Projekt (grupa 13)
+
+---
+
+
+
